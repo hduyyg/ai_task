@@ -1,3 +1,9 @@
+## 目录
+
+- [一、配置 knowledge.md](#一配置-knowledgemd)
+- [二、配置 claude.md](#二配置-claudemd)
+- [三、配置 develop_plan_example.md](#三配置-develop_plan_examplemd)
+
 # 一、配置 knowledge.md
 
 ​	在文档仓库下创建知识库文档，路径为： {文档仓库}/init_docs/knowledge.md。客户端在执行的时候，如果存在 knowledge.md，会在 prompt 里面要求agent读取知识库文档，了解相关背景。
