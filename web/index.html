@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI任务管理系统</title>
+    <link rel="stylesheet" href="css/style.css?v=13">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 登录页面 -->
+        <div id="login-page" class="page active">
+            <div class="auth-container">
+                <div class="auth-card">
+                    <div class="auth-header">
+                        <div class="logo">
+                            <span class="logo-icon">⚡</span>
+                            <h1>AI Task Manager</h1>
+                        </div>
+                        <p class="tagline">智能任务调度与管理平台</p>
+                    </div>
+                    
+                    <div class="auth-tabs">
+                        <button class="tab-btn active" data-tab="login">登录</button>
+                        <button class="tab-btn" data-tab="register">注册</button>
+                    </div>
+                    
+                    <!-- 登录表单 -->
+                    <form id="login-form" class="auth-form active">
+                        <div class="form-group">
+                            <label for="login-username">用户名</label>
+                            <input type="text" id="login-username" placeholder="请输入用户名" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">密码</label>
+                            <input type="password" id="login-password" placeholder="请输入密码" required>
+                        </div>
+                        <button type="submit" class="btn-primary">登录</button>
+                    </form>
+                    
+                    <!-- 注册表单 -->
+                    <form id="register-form" class="auth-form">
+                        <div class="form-group">
+                            <label for="register-username">用户名</label>
+                            <input type="text" id="register-username" placeholder="请输入用户名" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">密码</label>
+                            <input type="password" id="register-password" placeholder="请输入密码" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-confirm">确认密码</label>
+                            <input type="password" id="register-confirm" placeholder="请再次输入密码" required>
+                        </div>
+                        <button type="submit" class="btn-primary">注册</button>
+                    </form>
+                    
+                    <div id="auth-message" class="message"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主应用页面 -->
+        <div id="main-page" class="page">
+            <!-- 侧边栏 -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <span class="logo-icon">⚡</span>
+                    <span class="logo-text">AI Task</span>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#" class="nav-item" data-view="okr">
+                        <span class="nav-icon">🎯</span>
+                        <span>OKR管理</span>
+                    </a>
+                    <a href="#" class="nav-item active" data-view="todos">
+                        <span class="nav-icon">✅</span>
+                        <span>待办事项</span>
+                    </a>
+                    <a href="#" class="nav-item" data-view="tasks">
+                        <span class="nav-icon">📋</span>
+                        <span>任务列表</span>
+                    </a>
+                    <a href="#" class="nav-item" data-view="clients">
+                        <span class="nav-icon">🖥️</span>
+                        <span>客户端管理</span>
+                    </a>
+                    <a href="#" class="nav-item" data-view="secrets">
+                        <span class="nav-icon">🔑</span>
+                        <span>秘钥管理</span>
+                    </a>
+                </nav>
+                <div class="sidebar-footer">
+                    <div class="user-info">
+                        <span class="user-avatar">👤</span>
+                        <span id="current-username">用户</span>
+                    </div>
+                    <button id="logout-btn" class="btn-logout">退出</button>
+                </div>
+            </aside>
+            
+            <!-- 主内容区 -->
+            <main class="main-content">
+                <!-- 待办事项视图 -->
+                <div id="todos-view" class="view active">
+                    <div class="view-header">
+                        <h2>待办事项</h2>
+                        <div class="view-header-right">
+                            <div class="filter-group">
+                                <div class="todo-filter-btns" id="todo-filter">
+                                    <label class="filter-btn">
+                                        <input type="radio" name="todo-filter" value="pending" checked> 未完成
+                                    </label>
+                                    <label class="filter-btn">
+                                        <input type="radio" name="todo-filter" value="completed"> 已完成
+                                    </label>
+                                    <label class="filter-btn">
+                                        <input type="radio" name="todo-filter" value="all"> 全部
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="todo-container">
+                        <div class="todo-add-row">
+                            <input type="text" id="new-todo-input" placeholder="添加新待办..." maxlength="500">
+                            <button id="add-todo-btn" class="btn-primary btn-add-todo">添加</button>
+                        </div>
+                        <div class="todo-list" id="todo-list">
+                            <!-- 动态渲染待办项 -->
+                        </div>
+                        <div id="todos-empty" class="empty-state">
+                            <span class="empty-icon">✅</span>
+                            <p>暂无待办事项</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 任务列表视图 -->
+                <div id="tasks-view" class="view">
+                    <div class="view-header">
+                        <h2>任务列表</h2>
+                        <div class="view-header-right">
+                            <div class="filter-group">
+                                <span class="filter-label">状态筛选：</span>
+                                <div class="status-filter-btns" id="status-filter">
+                                    <label class="filter-btn checked">
+                                        <input type="checkbox" value="pending" checked> 未开始
+                                    </label>
+                                    <label class="filter-btn checked">
+                                        <input type="checkbox" value="running" checked> 进行中
+                                    </label>
+                                    <label class="filter-btn checked">
+                                        <input type="checkbox" value="suspended" checked> 已挂起
+                                    </label>
+                                    <label class="filter-btn checked">
+                                        <input type="checkbox" value="completed" checked> 已结束
+                                    </label>
+                                </div>
+                            </div>
+                            <button id="add-task-btn" class="btn-primary">
+                                <span>+</span> 新建任务
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>任务Key</th>
+                                    <th>标题</th>
+                                    <th>状态</th>
+                                    <th>客户端</th>
+                                    <th>执行状态</th>
+                                    <th>创建时间</th>
+                                    <th>更新时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tasks-table-body">
+                                <!-- 动态填充 -->
+                            </tbody>
+                        </table>
+                        <div id="tasks-empty" class="empty-state">
+                            <span class="empty-icon">📭</span>
+                            <p>暂无任务</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 客户端管理视图 -->
+                <div id="clients-view" class="view">
+                    <div class="view-header">
+                        <h2>客户端管理</h2>
+                        <div class="view-header-right">
+                            <div class="filter-group">
+                                <label class="filter-btn">
+                                    <input type="checkbox" id="client-only-mine"> 只看我的
+                                </label>
+                            </div>
+                            <div class="filter-group">
+                                <input type="text" id="client-search-input" placeholder="输入客户端ID搜索" class="search-input">
+                                <button id="client-search-btn" class="btn-secondary btn-small">搜索</button>
+                                <button id="client-search-clear-btn" class="btn-secondary btn-small">清除</button>
+                            </div>
+                            <button id="add-client-btn" class="btn-primary">
+                                <span>+</span> 添加客户端
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>名称</th>
+                                    <th>创始人</th>
+                                    <th>公开</th>
+                                    <th>最后心跳</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-table-body">
+                                <!-- 动态填充 -->
+                            </tbody>
+                        </table>
+                        <div id="clients-empty" class="empty-state">
+                            <span class="empty-icon">🖥️</span>
+                            <p>暂无客户端</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 秘钥管理视图 -->
+                <div id="secrets-view" class="view">
+                    <div class="view-header">
+                        <h2>秘钥管理</h2>
+                        <button id="add-secret-btn" class="btn-primary">
+                            <span>+</span> 新增秘钥
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>名称</th>
+                                    <th>秘钥</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="secrets-table-body">
+                                <!-- 动态填充 -->
+                            </tbody>
+                        </table>
+                        <div id="secrets-empty" class="empty-state">
+                            <span class="empty-icon">🔑</span>
+                            <p>暂无秘钥</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OKR管理视图 -->
+                <div id="okr-view" class="view">
+                    <div class="view-header">
+                        <h2>OKR管理</h2>
+                    </div>
+                    <div id="okr-cycle-nav" class="okr-cycle-nav">
+                        <!-- 动态填充周期导航 -->
+                    </div>
+                    <div id="okr-list" class="okr-waterfall-container">
+                        <!-- 动态填充瀑布流OKR -->
+                    </div>
+                    <div id="okr-empty" class="empty-state" style="display: none;">
+                        <span class="empty-icon">🎯</span>
+                        <p>暂无OKR目标</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- 模态框 -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div id="modal" class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">标题</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modal-content" class="modal-content">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- 修订反馈弹窗 -->
+    <div id="revise-modal" class="revise-modal-overlay">
+        <div class="revise-modal">
+            <div class="revise-modal-header">
+                <h3>提交修订反馈</h3>
+                <button class="modal-close" onclick="hideReviseModal()">&times;</button>
+            </div>
+            <div class="revise-modal-content">
+                <label for="revise-feedback">请输入您的反馈意见：</label>
+                <textarea id="revise-feedback" class="revise-textarea" placeholder="请详细描述需要修订的内容..."></textarea>
+            </div>
+            <div class="revise-modal-footer">
+                <button class="btn-secondary" onclick="hideReviseModal()">取消</button>
+                <button class="btn-primary" onclick="submitRevise()">确认提交</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast通知 -->
+    <div id="toast-container" class="toast-container"></div>
+    
+    <script src="js/utils.js?v=3"></script>
+    <script src="js/api.js?v=7"></script>
+    <script src="js/flow-chart.js?v=6"></script>
+    <script src="js/okr.js?v=2"></script>
+    <script src="js/app.js?v=16"></script>
+</body>
+</html>
+

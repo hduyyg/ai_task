@@ -1,0 +1,103 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+AI任务需求管理系统 - API Server
+"""
+
+import argparse
+import logging
+import os
+import sys
+
+from flask import Flask, send_from_directory
+
+# 配置日志格式
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+from flask_cors import CORS
+
+from config_model import AppConfig
+from dao import init_database, remove_session
+from routes.user import user_bp
+from routes.client import client_bp
+from routes.task import task_bp
+from routes.okr import okr_bp
+from routes.todo import todo_bp
+
+
+def create_app(config: AppConfig) -> Flask:
+    """创建Flask应用"""
+    app = Flask(__name__, static_folder='../web', static_url_path='')
+    
+    # 配置 - 直接访问对象属性
+    app.config['HEARTBEAT_TIMEOUT_SECONDS'] = config.heartbeat.timeout_seconds
+    app.json.ensure_ascii = False  # JSON响应中文不转义
+    
+    # 启用CORS
+    CORS(app, supports_credentials=True)
+    
+    # 构建 URL 前缀（处理空前缀情况）
+    prefix = config.server.url_prefix.rstrip('/') if config.server.url_prefix else ''
+    
+    # 注册蓝图
+    app.register_blueprint(user_bp, url_prefix=f'{prefix}/api/user')
+    app.register_blueprint(client_bp, url_prefix=f'{prefix}/api/client')
+    app.register_blueprint(task_bp, url_prefix=f'{prefix}/api/task')
+    app.register_blueprint(okr_bp, url_prefix=f'{prefix}/api/okr')
+    app.register_blueprint(todo_bp, url_prefix=f'{prefix}/api/todo')
+    
+    # 请求结束时清理session
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        remove_session()
+
+    # 健康检查端点
+    @app.route(f'{prefix}/api/health')
+    def health():
+        return {'code': 200, 'message': 'ok', 'data': {'status': 'healthy'}}
+
+    # 静态文件路由
+    @app.route('/')
+    def index():
+        return send_from_directory(app.static_folder, 'index.html')
+
+    @app.route('/<path:path>')
+    def static_files(path):
+        return send_from_directory(app.static_folder, path)
+
+    return app
+
+
+def main():
+    parser = argparse.ArgumentParser(description='AI Task Management API Server')
+    parser.add_argument('--config', '-c', type=str, default='config.toml',
+                        help='Path to configuration file (TOML format)')
+    args = parser.parse_args()
+    
+    # 加载配置
+    if not os.path.exists(args.config):
+        print(f"Error: Config file not found: {args.config}")
+        sys.exit(1)
+    
+    config = AppConfig.from_toml(args.config)
+    
+    # 初始化数据库（检查并创建表）
+    init_database(config.database)
+    
+    # 创建应用
+    app = create_app(config)
+    
+    # 启动服务器
+    print(f"Starting API Server on http://{config.server.host}:{config.server.port}")
+    app.run(
+        host=config.server.host,
+        port=config.server.port,
+        debug=config.server.debug
+    )
+
+
+if __name__ == '__main__':
+    main()

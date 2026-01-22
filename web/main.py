@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+AI任务需求管理系统 - Web 前端服务
+"""
+
+import argparse
+import logging
+import os
+import sys
+
+from flask import Flask, send_from_directory, jsonify, Blueprint
+
+# 配置日志格式
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+from config_model import WebConfig
+
+
+def create_app(config: WebConfig) -> Flask:
+    """创建Flask应用"""
+    # 获取当前脚本所在目录作为静态文件目录
+    static_folder = os.path.dirname(os.path.abspath(__file__))
+    app = Flask(__name__, static_folder=static_folder, static_url_path='')
+    
+    # 构建 URL 前缀（处理空前缀情况）
+    url_prefix = config.server.url_prefix.rstrip('/') if config.server.url_prefix else ''
+    
+    # 保存配置到 app.config
+    app.config['APISERVER_URL'] = config.apiserver.url
+    app.config['URL_PREFIX'] = url_prefix
+    
+    # 创建蓝图
+    web_bp = Blueprint('web', __name__)
+    
+    # 提供配置接口，供前端获取后端地址
+    @web_bp.route('/config.json')
+    def get_config():
+        return jsonify({
+            'apiserver': {
+                'url': config.apiserver.url,
+                'host': config.apiserver.host,
+                'path_prefix': config.apiserver.path_prefix
+            }
+        })
+    
+    # 静态文件路由
+    @web_bp.route('/')
+    def index():
+        return send_from_directory(static_folder, 'index.html')
+    
+    @web_bp.route('/<path:path>')
+    def static_files(path):
+        return send_from_directory(static_folder, path)
+    
+    # 注册蓝图（带或不带前缀）
+    app.register_blueprint(web_bp, url_prefix=url_prefix if url_prefix else None)
+    
+    return app
+
+
+def main():
+    parser = argparse.ArgumentParser(description='AI Task Management Web Server')
+    parser.add_argument('--config', '-c', type=str, default='config.toml',
+                        help='Path to configuration file (TOML format)')
+    args = parser.parse_args()
+    
+    # 加载配置
+    if not os.path.exists(args.config):
+        print(f"Error: Config file not found: {args.config}")
+        sys.exit(1)
+    
+    config = WebConfig.from_toml(args.config)
+    
+    # 创建应用
+    app = create_app(config)
+    
+    # 启动服务器
+    url_prefix = config.server.url_prefix.rstrip('/') if config.server.url_prefix else ''
+    print(f"Starting Web Server on http://{config.server.host}:{config.server.port}{url_prefix}")
+    print(f"API Server configured at: {config.apiserver.url}")
+    app.run(
+        host=config.server.host,
+        port=config.server.port,
+        debug=False
+    )
+
+
+if __name__ == '__main__':
+    main()
