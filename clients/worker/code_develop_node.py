@@ -25,7 +25,6 @@ class CodeDevelopNode(BaseNode):
     node_name = "代码开发"
     node_key = "code_develop"
     execute_unique_key = None
-    user_feedback = None
 
     # ========== 目录路径属性 ==========
 
