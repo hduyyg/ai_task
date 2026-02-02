@@ -60,3 +60,7 @@
 ## 待补充
 
 欢迎大家提需求我来实现（反正也是AI写的）
+
+# 请作者喝奶茶
+
+![img](./docs/imgs/3deb31fefb403533dacd14fbda2a9b3e.png)
